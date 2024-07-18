@@ -1,0 +1,61 @@
+###############
+# build stage #
+###############
+
+FROM docker.io/debian:bookworm-slim AS build-stage
+
+WORKDIR /opt/build
+
+# Install dependencies
+## Install common system-tools
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	build-essential \
+	curl
+RUN rm -rf /var/lib/apt/lists/*
+
+## Install LLVM build deps
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
+	cmake python3 \
+	ninja-build
+RUN rm -rf /var/lib/apt/lists/*
+
+# Download, build and install LLVM
+## Download LLVM source
+RUN curl -fLsSo llvm.tar.gz \
+	"https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-17.0.6.tar.gz"
+
+## Build LLVM
+
+### Unpack sources
+RUN mkdir -p llvm-source llvm-build
+RUN tar -xf llvm.tar.gz -C llvm-source --strip-components=1
+
+
+### Build
+RUN cmake \
+	-S llvm-source/llvm \
+	-B llvm-build \
+	-G Ninja \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DLLVM_ENABLE_PROJECTS="clang" \
+	-DLLVM_ENABLE_RUNTIMES=compiler-rt \
+	-DCMAKE_INSTALL_PREFIX=/opt/llvm \
+	-DCMAKE_C_COMPILER=gcc \
+	-DCMAKE_CXX_COMPILER=g++ \
+	-DCMAKE_ASM_COMPILER=gcc
+RUN cmake --build llvm-build
+
+### Install
+RUN cmake --install llvm-build
+
+################
+# export stage #
+################
+
+FROM docker.io/debian:bookworm-slim AS export-stage
+
+COPY --from=build-stage /opt/llvm/ /opt/llvm/
+
+CMD ["echo", "This image is not meant to be run. It only provides files located in /opt/llvm."]
