@@ -2,7 +2,7 @@
 # imported images #
 ###################
 
-FROM dlang-dockerized/ldc:-bookworm AS ldc-bootstrap-imported
+FROM dlang-dockerized/ldc:1.20-bookworm AS ldc-bootstrap-imported
 
 ###############
 # build stage #
@@ -78,7 +78,6 @@ FROM docker.io/debian:bookworm-slim AS export-stage
 ## Prepare runtime-environment
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
-	libconfig++ \
 	build-essential
 RUN rm -rf /var/lib/apt/lists/*
 
