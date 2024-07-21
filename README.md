@@ -9,7 +9,7 @@ choice.
 
 ```sh
 # For example
-docker build -f dockerfiles/dmd/2.100.0/bookworm/Dockerfile
+docker build -f containerfiles/dmd/2.100.0/bookworm/Dockerfile
 ```
 
 > You can also use the
