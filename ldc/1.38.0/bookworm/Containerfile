@@ -107,7 +107,8 @@ FROM docker.io/debian:bookworm-slim AS export-stage
 ## Prepare runtime-environment
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
-	build-essential
+	build-essential \
+	curl
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY --from=build-stage /opt/ldc /opt/ldc
