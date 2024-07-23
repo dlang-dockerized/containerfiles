@@ -8,7 +8,7 @@ FROM dlang-dockerized/llvm:7.0-bookworm AS llvm-imported
 # build stage #
 ###############
 
-FROM docker.io/debian:bookworm-slim AS build-stage
+FROM docker.io/debian:bookworm-slim AS build-stage-1
 
 WORKDIR /opt/build
 
@@ -32,8 +32,7 @@ RUN rm -rf /var/lib/apt/lists/*
 # Copy prebuilt LLVM from dlang-dockerized/llvm
 COPY --from=llvm-imported /opt/llvm/ /opt/llvm/
 
-
-# Download, build and install LDC
+# Download LDC sources
 
 ### Download LDC source
 RUN curl -fLsSo ldc.tar.gz \
@@ -46,6 +45,9 @@ RUN curl -fLsSo phobos.tar.gz \
 ### Download separate druntime source (old repo layout)
 RUN curl -fLsSo druntime.tar.gz \
 	"https://github.com/ldc-developers/druntime/archive/refs/heads/ldc-ltsmaster.tar.gz"
+
+
+# Build and install LDC
 
 ## Build LDC
 
@@ -96,7 +98,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
 	curl
 RUN rm -rf /var/lib/apt/lists/*
 
-COPY --from=build-stage /opt/ldc /opt/ldc
+COPY --from=build-stage-1 /opt/ldc /opt/ldc
 
 # Self-test
 COPY ./resources/helloworld.d /opt/helloworld.d
