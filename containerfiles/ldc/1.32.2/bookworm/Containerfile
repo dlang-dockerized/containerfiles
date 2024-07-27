@@ -2,7 +2,7 @@
 # imported images #
 ###################
 
-FROM dlang-dockerized/llvm:17.0-bookworm AS llvm-imported
+FROM dlang-dockerized/llvm:15.0-bookworm AS llvm-imported
 FROM dlang-dockerized/ldc:1.20-bookworm AS ldc-bootstrap-imported
 
 ###############
@@ -38,11 +38,11 @@ COPY --from=llvm-imported /opt/llvm/ /opt/llvm/
 
 ### Download LDC source
 RUN curl -fLsSo ldc.tar.gz \
-	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.37.0.tar.gz"
+	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.32.2.tar.gz"
 
 ### Download Phobos source
 RUN curl -fLsSo phobos.tar.gz \
-	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.37.0.tar.gz"
+	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.32.2.tar.gz"
 
 
 # Copy prebuilt LDC from dlang-dockerized/ldc
@@ -115,11 +115,11 @@ COPY --from=llvm-imported /opt/llvm/ /opt/llvm/
 
 ### Download LDC source
 RUN curl -fLsSo ldc.tar.gz \
-	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.37.0.tar.gz"
+	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.32.2.tar.gz"
 
 ### Download Phobos source
 RUN curl -fLsSo phobos.tar.gz \
-	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.37.0.tar.gz"
+	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.32.2.tar.gz"
 
 
 # Copy prebuilt LDC from dlang-dockerized/ldc
@@ -164,7 +164,7 @@ RUN rm /opt/helloworld.d
 ### Download, build and install DUB
 ## Download DUB source
 RUN curl -fLsSo dub.tar.gz \
-	"https://github.com/dlang/dub/archive/refs/tags/v1.36.0.tar.gz"
+	"https://github.com/dlang/dub/archive/refs/tags/v1.31.1.tar.gz"
 
 ## Build DUB
 
@@ -181,11 +181,12 @@ WORKDIR /opt/build
 ## Make D Tools
 
 ### Download D Tools source
-RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.107.1.tar.gz"
+RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.102.2.tar.gz"
 ### Build D Tools
 RUN mkdir -p d-tools
 RUN tar -xf d-tools.tar.gz -C d-tools --strip-components=1
 RUN make -C d-tools \
+-f posix.mak \
 	DMD=$DMD \
 	all
 ################

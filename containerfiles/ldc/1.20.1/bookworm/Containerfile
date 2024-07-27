@@ -169,7 +169,22 @@ RUN rm /opt/helloworld.d
 
 ## Make DUB
 
-### -- Without DUB --
+### Download, build and install DUB
+## Download DUB source
+RUN curl -fLsSo dub.tar.gz \
+	"https://github.com/dlang/dub/archive/refs/tags/v1.19.0.tar.gz"
+
+## Build DUB
+
+### Unpack sources
+RUN mkdir -p dub
+RUN tar -xf dub.tar.gz -C dub --strip-components=1
+
+### Build
+WORKDIR /opt/build/dub
+RUN DFLAGS="-O -inline" $DMD -run build.d
+WORKDIR /opt/build
+
 
 ## Make D Tools
 
@@ -206,6 +221,7 @@ COPY ./resources/helloworld.d /opt/helloworld.d
 RUN /opt/ldc/bin/ldmd2 -run /opt/helloworld.d
 RUN rm /opt/helloworld.d
 
+COPY --from=build-stage-3 /opt/build/dub/bin/dub /usr/bin/dub
 
 ## Install D Tools
 COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
