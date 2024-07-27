@@ -19,7 +19,8 @@ WORKDIR /opt/build
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
 	build-essential \
-	curl
+	curl \
+	git
 RUN rm -rf /var/lib/apt/lists/*
 
 ## Install LDC build deps
@@ -95,7 +96,8 @@ WORKDIR /opt/build
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
 	build-essential \
-	curl
+	curl \
+	git
 RUN rm -rf /var/lib/apt/lists/*
 
 ## Install LDC build deps
@@ -176,6 +178,17 @@ RUN DFLAGS="-O -inline" $DMD -run build.d
 WORKDIR /opt/build
 
 
+## Make D Tools
+
+### Download D Tools source
+RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.103.1.tar.gz"
+### Build D Tools
+RUN mkdir -p d-tools
+RUN tar -xf d-tools.tar.gz -C d-tools --strip-components=1
+RUN make -C d-tools \
+-f posix.mak \
+	DMD=$DMD \
+	all
 ################
 # export stage #
 ################
@@ -191,6 +204,10 @@ RUN rm -rf /var/lib/apt/lists/*
 
 COPY --from=build-stage-3 /opt/ldc /opt/ldc
 
+## Install D Tools
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/dustmite /usr/bin/dustmite
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/rdmd /usr/bin/rdmd
 # Self-test
 COPY ./resources/helloworld.d /opt/helloworld.d
 RUN /opt/ldc/bin/ldmd2 -run /opt/helloworld.d
@@ -198,6 +215,10 @@ RUN rm /opt/helloworld.d
 
 COPY --from=build-stage-3 /opt/build/dub/bin/dub /usr/bin/dub
 
+## Install D Tools
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/dustmite /usr/bin/dustmite
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/rdmd /usr/bin/rdmd
 COPY ./templates/scripts/entrypoint-ldc.sh /usr/bin/entrypoint
 
 ENTRYPOINT [ "/usr/bin/entrypoint" ]
