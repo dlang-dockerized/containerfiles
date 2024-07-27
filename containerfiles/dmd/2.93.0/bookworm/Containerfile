@@ -1,0 +1,119 @@
+###################
+# imported images #
+###################
+
+FROM dlang-dockerized/ldc:1.20-bookworm AS ldc-bootstrap-imported
+
+###############
+# build stage #
+###############
+
+FROM docker.io/debian:bookworm-slim AS build-stage
+
+WORKDIR /opt/build
+
+# Install dependencies
+
+## Install common system-tools
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	build-essential \
+	curl \
+	git
+RUN rm -rf /var/lib/apt/lists/*
+
+# Copy prebuilt LDC from dlang-dockerized/ldc
+COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc-bootstrap/
+RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.conf
+
+# Download, build and install DMD
+
+## Download DMD source
+RUN curl -fLsSo dmd.tar.gz "https://github.com/dlang/dmd/archive/refs/tags/v2.093.0.tar.gz"
+RUN curl -fLsSo phobos.tar.gz "https://github.com/dlang/phobos/archive/refs/tags/v2.093.0.tar.gz"
+RUN curl -fLsSo druntime.tar.gz "https://github.com/dlang/druntime/archive/refs/tags/v2.093.0.tar.gz"
+
+RUN ln -s /opt/ldc-bootstrap/bin/ldmd2 /usr/bin/dmd
+
+## Build DMD
+
+### Unpack sources
+RUN mkdir -p dmd
+RUN mkdir -p phobos
+RUN mkdir -p druntime
+RUN tar -xf dmd.tar.gz -C dmd --strip-components=1
+RUN tar -xf phobos.tar.gz -C phobos --strip-components=1
+RUN tar -xf druntime.tar.gz -C druntime --strip-components=1
+
+### Build DMD compiler
+RUN make -C dmd -f posix.mak
+
+RUN rm /usr/bin/dmd
+RUN ln -s /opt/build/dmd/generated/linux/release/64/dmd /usr/bin/dmd
+ENV DMD=/usr/bin/dmd
+
+### Build Phobos
+RUN make -C phobos -f posix.mak
+## Make DUB
+
+### Download, build and install DUB
+## Download DUB source
+RUN curl -fLsSo dub.tar.gz \
+	"https://github.com/dlang/dub/archive/refs/tags/v1.22.0.tar.gz"
+
+## Build DUB
+
+### Unpack sources
+RUN mkdir -p dub
+RUN tar -xf dub.tar.gz -C dub --strip-components=1
+
+### Build
+WORKDIR /opt/build/dub
+RUN DFLAGS="-O -inline" $DMD -run build.d
+WORKDIR /opt/build
+
+
+## Make D Tools
+
+### Download D Tools source
+RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.093.0.tar.gz"
+### Build D Tools
+RUN mkdir -p d-tools
+RUN tar -xf d-tools.tar.gz -C d-tools --strip-components=1
+RUN make -C d-tools \
+-f posix.mak \
+	DMD=$DMD \
+	all
+################
+# export stage #
+################
+
+FROM docker.io/debian:bookworm-slim AS export-stage
+
+## Prepare runtime-environment
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
+	build-essential \
+	curl
+RUN rm -rf /var/lib/apt/lists/*
+
+COPY --from=build-stage /opt/build/dmd/generated/linux/release/64/dmd /usr/bin/dmd
+COPY --from=build-stage /opt/build/phobos/generated/linux/release/64/* /usr/lib/
+    COPY --from=build-stage /opt/build/druntime/src /usr/include/dmd/druntime/import
+COPY --from=build-stage /opt/build/phobos/std /usr/include/dmd/phobos/std
+COPY --from=build-stage /opt/build/phobos/etc /usr/include/dmd/phobos/etc
+    COPY --from=build-stage /opt/build/dub/bin/dub /usr/bin/dub
+COPY ./resources/dmd.conf /etc/dmd.conf
+COPY ./templates/scripts/entrypoint-dmd.sh /usr/bin/entrypoint
+
+## Install D Tools
+COPY --from=build-stage /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
+COPY --from=build-stage /opt/build/d-tools/generated/linux/64/dustmite /usr/bin/dustmite
+COPY --from=build-stage /opt/build/d-tools/generated/linux/64/rdmd /usr/bin/rdmd
+# Self-test
+COPY ./resources/helloworld.d /opt/helloworld.d
+RUN dmd -run /opt/helloworld.d
+RUN rm /opt/helloworld.d
+
+ENTRYPOINT [ "/usr/bin/entrypoint" ]
+CMD [ "/usr/bin/dmd" ]
