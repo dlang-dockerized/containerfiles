@@ -14,13 +14,13 @@ WORKDIR /opt/build
 
 # Install dependencies
 
-## Install common system-tools
+## Install extended common system-tools
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
 	build-essential \
-	curl \
 	git \
-	libcurl4-openssl-dev
+	libcurl4-openssl-dev \
+	curl
 RUN rm -rf /var/lib/apt/lists/*
 
 ## Install LDC build deps
@@ -108,7 +108,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
 	libconfig++ \
 	build-essential \
-	curl
+	curl \
+	libcurl4-openssl-dev
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY --from=build-stage-1 /opt/ldc /opt/ldc
