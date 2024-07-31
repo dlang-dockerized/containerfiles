@@ -13,7 +13,7 @@ docker build -f containerfiles/dmd/2.100.0/bookworm/Dockerfile
 ```
 
 > You can also use the
-> [dlang-dockerized Container Toolkit](https://github.com/dlang-dockerized/packaging?tab=readme-ov-file#ddct)
+> [dlang-dockerized Container Toolkit](https://github.com/dlang-dockerized/packaging?tab=readme-ov-file#container-toolkit)
 > for a more convenient experience.
 
 ## Source Code
