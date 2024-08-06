@@ -89,7 +89,7 @@ RUN rm /opt/helloworld.d
 ## Make D Tools
 
 ### Download D Tools source
-RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/heads/2.068.2.tar.gz"
+RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.068.2.tar.gz"
 ### Build D Tools
 RUN mkdir -p d-tools
 RUN tar -xf d-tools.tar.gz -C d-tools --strip-components=1
