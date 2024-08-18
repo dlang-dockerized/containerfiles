@@ -1,0 +1,228 @@
+###################
+# imported images #
+###################
+
+FROM dlang-dockerized/llvm-xtensa:16.0-bookworm AS llvm-imported
+FROM dlang-dockerized/ldc:1.20-bookworm AS ldc-bootstrap-imported
+
+###############
+# build stage #
+###############
+
+FROM docker.io/debian:bookworm-slim AS build-stage-2
+
+WORKDIR /opt/build
+
+# Install dependencies
+
+## Install extended common system-tools
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	build-essential \
+	curl \
+	git \
+	libcurl4-openssl-dev
+RUN rm -rf /var/lib/apt/lists/*
+
+## Install LDC build deps
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
+	cmake python3 \
+	ninja-build \
+	libconfig++-dev # libconfig++ only needed for older ldc
+RUN rm -rf /var/lib/apt/lists/*
+
+# Copy prebuilt LLVM from dlang-dockerized/llvm
+COPY --from=llvm-imported /opt/llvm/ /opt/llvm/
+
+# Download LDC sources
+
+### Download LDC source
+RUN curl -fLsSo ldc.tar.gz \
+	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.39.0.tar.gz"
+
+### Download Phobos source
+RUN curl -fLsSo phobos.tar.gz \
+	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.39.0.tar.gz"
+
+
+# Copy prebuilt LDC from dlang-dockerized/ldc
+COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc-bootstrap/
+RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.conf
+
+# Build and install LDC
+
+ENV DMD=/opt/ldc-bootstrap/bin/ldmd2
+## Build LDC
+
+### Unpack sources
+RUN mkdir ldc-source ldc-build
+RUN tar -xf ldc.tar.gz -C ldc-source --strip-components=1
+RUN tar -xf phobos.tar.gz -C ldc-source/runtime/phobos --strip-components=1
+
+### Build
+RUN cmake \
+	-S ldc-source \
+	-B ldc-build \
+	-G Ninja \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=/opt/ldc \
+	-DLLVM_ROOT_DIR=/opt/llvm \
+	-DCMAKE_C_COMPILER=gcc \
+	-DCMAKE_CXX_COMPILER=g++ \
+	-DCMAKE_ASM_COMPILER=gcc
+	#-DLDC_EXE=y # didn't work
+RUN cmake --build ldc-build
+
+### Install
+RUN cmake --install ldc-build
+ENV DMD=/opt/ldc/bin/ldmd2
+
+# Self-test
+COPY ./resources/helloworld.d /opt/helloworld.d
+RUN /opt/ldc/bin/ldmd2 -run /opt/helloworld.d
+RUN rm /opt/helloworld.d
+
+##################
+# self bootstrap #
+##################
+
+FROM docker.io/debian:bookworm-slim AS build-stage-3
+
+WORKDIR /opt/build
+
+# Install dependencies
+
+## Install extended common system-tools
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	build-essential \
+	curl \
+	git \
+	libcurl4-openssl-dev
+RUN rm -rf /var/lib/apt/lists/*
+
+## Install LDC build deps
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
+	cmake python3 \
+	ninja-build \
+	libconfig++-dev # libconfig++ only needed for older ldc
+RUN rm -rf /var/lib/apt/lists/*
+
+# Copy prebuilt LLVM from dlang-dockerized/llvm
+COPY --from=llvm-imported /opt/llvm/ /opt/llvm/
+
+# Download LDC sources
+
+### Download LDC source
+RUN curl -fLsSo ldc.tar.gz \
+	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.39.0.tar.gz"
+
+### Download Phobos source
+RUN curl -fLsSo phobos.tar.gz \
+	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.39.0.tar.gz"
+
+
+# Copy prebuilt LDC from dlang-dockerized/ldc
+COPY --from=build-stage-2 /opt/ldc/ /opt/ldc-bootstrap/
+RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.conf
+
+# Build and install LDC
+
+ENV DMD=/opt/ldc-bootstrap/bin/ldmd2
+## Build LDC
+
+### Unpack sources
+RUN mkdir ldc-source ldc-build
+RUN tar -xf ldc.tar.gz -C ldc-source --strip-components=1
+RUN tar -xf phobos.tar.gz -C ldc-source/runtime/phobos --strip-components=1
+
+### Build
+RUN cmake \
+	-S ldc-source \
+	-B ldc-build \
+	-G Ninja \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=/opt/ldc \
+	-DLLVM_ROOT_DIR=/opt/llvm \
+	-DCMAKE_C_COMPILER=gcc \
+	-DCMAKE_CXX_COMPILER=g++ \
+	-DCMAKE_ASM_COMPILER=gcc
+	#-DLDC_EXE=y # didn't work
+RUN cmake --build ldc-build
+
+### Install
+RUN cmake --install ldc-build
+ENV DMD=/opt/ldc/bin/ldmd2
+
+# Self-test
+COPY ./resources/helloworld.d /opt/helloworld.d
+RUN /opt/ldc/bin/ldmd2 -run /opt/helloworld.d
+RUN rm /opt/helloworld.d
+
+## Make DUB
+
+### Download, build and install DUB
+## Download DUB source
+RUN curl -fLsSo dub.tar.gz \
+	"https://github.com/dlang/dub/archive/refs/tags/v1.38.0.tar.gz"
+
+## Build DUB
+
+### Unpack sources
+RUN mkdir -p dub
+RUN tar -xf dub.tar.gz -C dub --strip-components=1
+
+### Build
+WORKDIR /opt/build/dub
+RUN DFLAGS="-O2" \
+	$DMD -run build.d
+WORKDIR /opt/build
+
+
+## Make D Tools
+
+### Download D Tools source
+RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.109.1.tar.gz"
+### Build D Tools
+RUN mkdir -p d-tools
+RUN tar -xf d-tools.tar.gz -C d-tools --strip-components=1
+RUN make -C d-tools \
+	DMD=$DMD \
+	all
+################
+# export stage #
+################
+
+FROM docker.io/debian:bookworm-slim AS export-stage
+
+## Prepare runtime-environment
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
+	build-essential \
+	curl \
+	libcurl4-openssl-dev
+RUN rm -rf /var/lib/apt/lists/*
+
+COPY --from=build-stage-3 /opt/ldc /opt/ldc
+
+## Install D Tools
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/dustmite /usr/bin/dustmite
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/rdmd /usr/bin/rdmd
+# Self-test
+COPY ./resources/helloworld.d /opt/helloworld.d
+RUN /opt/ldc/bin/ldmd2 -run /opt/helloworld.d
+RUN rm /opt/helloworld.d
+
+COPY --from=build-stage-3 /opt/build/dub/bin/dub /usr/bin/dub
+
+## Install D Tools
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/dustmite /usr/bin/dustmite
+COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/rdmd /usr/bin/rdmd
+COPY ./templates/scripts/entrypoint-ldc.sh /usr/bin/entrypoint
+
+ENTRYPOINT [ "/usr/bin/entrypoint" ]
+CMD [ "/opt/ldc/bin/ldc2" ]
