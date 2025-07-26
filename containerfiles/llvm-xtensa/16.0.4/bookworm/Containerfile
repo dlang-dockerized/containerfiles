@@ -9,6 +9,8 @@ WORKDIR /opt/build
 
 # Install dependencies
 ## Install common system-tools
+
+### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
 	build-essential \

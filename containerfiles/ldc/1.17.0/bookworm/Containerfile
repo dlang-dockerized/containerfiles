@@ -16,6 +16,8 @@ WORKDIR /opt/build
 # Install dependencies
 
 ## Install extended common system-tools
+
+### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
 	build-essential \
@@ -98,6 +100,8 @@ WORKDIR /opt/build
 # Install dependencies
 
 ## Install extended common system-tools
+
+### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
 	build-essential \
@@ -207,6 +211,8 @@ RUN make -C d-tools \
 FROM docker.io/debian:bookworm-slim AS export-stage
 
 ## Prepare runtime-environment
+
+### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
 	build-essential \
