@@ -21,8 +21,9 @@ RUN rm -rf /var/lib/apt/lists/*
 ## Install LLVM build deps
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
-	cmake python3 \
-	ninja-build
+	cmake \
+	ninja-build \
+	python3
 RUN rm -rf /var/lib/apt/lists/*
 
 # Download, build and install LLVM

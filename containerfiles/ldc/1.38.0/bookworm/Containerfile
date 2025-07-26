@@ -29,8 +29,9 @@ RUN rm -rf /var/lib/apt/lists/*
 ## Install LDC build deps
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
-	cmake python3 \
+	cmake \
 	ninja-build \
+	python3 \
 	libconfig++-dev # libconfig++ only needed for older ldc
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -109,8 +110,9 @@ RUN rm -rf /var/lib/apt/lists/*
 ## Install LDC build deps
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
-	cmake python3 \
+	cmake \
 	ninja-build \
+	python3 \
 	libconfig++-dev # libconfig++ only needed for older ldc
 RUN rm -rf /var/lib/apt/lists/*
 
