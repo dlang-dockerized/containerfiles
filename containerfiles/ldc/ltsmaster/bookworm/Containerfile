@@ -119,10 +119,15 @@ RUN rm -rf /var/lib/apt/lists/*
 
 COPY --from=build-stage-1 /opt/ldc /opt/ldc
 
+RUN ln -s /opt/ldc/bin/ldc2 /usr/local/bin/ldc2
+RUN ln -s /opt/ldc/bin/ldmd2 /usr/local/bin/ldmd2
+RUN ln -s /opt/ldc/bin/ldmd2 /usr/local/bin/dmd
+ENV DMD=/usr/local/bin/ldmd2
+
 ## Install D Tools
-COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
-COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/dustmite /usr/bin/dustmite
-COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/rdmd /usr/bin/rdmd
+COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
+COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
+COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
 # Self-test
 COPY ./resources/helloworld.d /opt/helloworld.d
 RUN /opt/ldc/bin/ldmd2 -run /opt/helloworld.d
@@ -130,10 +135,10 @@ RUN rm /opt/helloworld.d
 
 
 ## Install D Tools
-COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/ddemangle /usr/bin/ddemangle
-COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/dustmite /usr/bin/dustmite
-COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/rdmd /usr/bin/rdmd
-COPY ./templates/scripts/entrypoint-ldc.sh /usr/bin/entrypoint
+COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
+COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
+COPY --from=build-stage-1 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
+COPY ./templates/scripts/entrypoint-ldc.sh /usr/local/bin/entrypoint
 
-ENTRYPOINT [ "/usr/bin/entrypoint" ]
-CMD [ "/opt/ldc/bin/ldc2" ]
+ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
+CMD [ "/usr/local/bin/ldc2" ]
