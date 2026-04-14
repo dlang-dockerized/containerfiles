@@ -54,7 +54,7 @@ RUN curl -fLsSo druntime.tar.gz \
 
 # Copy prebuilt LDC from dlang-dockerized/ldc
 COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc-bootstrap/
-RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.conf
+RUN find /opt/ldc-bootstrap/etc/ldc2.conf -type f -exec sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' {} \;
 
 # Build and install LDC
 
@@ -139,7 +139,7 @@ RUN curl -fLsSo druntime.tar.gz \
 
 # Copy prebuilt LDC from dlang-dockerized/ldc
 COPY --from=build-stage-2 /opt/ldc/ /opt/ldc-bootstrap/
-RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.conf
+RUN find /opt/ldc-bootstrap/etc/ldc2.conf -type f -exec sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' {} \;
 
 # Build and install LDC
 
