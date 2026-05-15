@@ -52,8 +52,8 @@ RUN apt-get -y install \
 RUN rm -rf /var/lib/apt/lists/*
 
 ##### Install SDK
-RUN /opt/build/emsdk/emsdk install latest
-RUN /opt/build/emsdk/emsdk activate latest
+RUN /opt/build/emsdk/emsdk install 5.0.5
+RUN /opt/build/emsdk/emsdk activate 5.0.5
 
 #### Install installation dependencies of Zig
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
