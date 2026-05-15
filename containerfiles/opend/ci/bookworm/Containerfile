@@ -108,10 +108,10 @@ RUN ln -s /opt/opend/bin/ldc2 /usr/local/bin/ldc2
 RUN ln -s /opt/opend/bin/ldmd2 /usr/local/bin/ldmd2
 RUN ln -s /opt/opend/bin/opend /usr/local/bin/opend
 RUN ln -s /opt/opend/bin/timetrace2txt /usr/local/bin/timetrace2txt
+RUN ln -s /opt/opend/xpacks/opend-latest-xpack-zig/zigcc /usr/local/bin/zigcc
 RUN ln -s /opt/zig/zig /usr/local/bin/zig
 
 COPY ./templates/scripts/entrypoint-opend.sh /usr/local/bin/entrypoint
-COPY ./templates/scripts/zigcc.sh /usr/local/bin/zigcc
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 CMD [ "/usr/local/bin/opend" ]
