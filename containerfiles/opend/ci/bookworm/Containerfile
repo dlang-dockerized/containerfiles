@@ -111,7 +111,7 @@ RUN ln -s /opt/opend/bin/timetrace2txt /usr/local/bin/timetrace2txt
 RUN ln -s /opt/opend/xpacks/opend-latest-xpack-zig/zigcc /usr/local/bin/zigcc
 RUN ln -s /opt/zig/zig /usr/local/bin/zig
 
-COPY ./templates/scripts/entrypoint-opend.sh /usr/local/bin/entrypoint
+COPY ./resources/scripts/entrypoint-opend.sh /usr/local/bin/entrypoint
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 CMD [ "/usr/local/bin/opend" ]

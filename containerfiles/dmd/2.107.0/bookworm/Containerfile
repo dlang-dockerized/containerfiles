@@ -107,7 +107,7 @@ COPY --from=build-stage /opt/build/phobos/std /usr/include/dmd/phobos/std
 COPY --from=build-stage /opt/build/phobos/etc /usr/include/dmd/phobos/etc
 COPY --from=build-stage /opt/build/dub/bin/dub /usr/local/bin/dub
 COPY ./resources/dmd.conf /etc/dmd.conf
-COPY ./templates/scripts/entrypoint-dmd.sh /usr/local/bin/entrypoint
+COPY ./resources/scripts/entrypoint-dmd.sh /usr/local/bin/entrypoint
 
 ## Install D Tools
 COPY --from=build-stage /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle

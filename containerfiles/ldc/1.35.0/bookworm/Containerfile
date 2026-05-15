@@ -236,7 +236,7 @@ COPY --from=build-stage-3 /opt/build/dub/bin/dub /usr/local/bin/dub
 COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
 COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
 COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
-COPY ./templates/scripts/entrypoint-ldc.sh /usr/local/bin/entrypoint
+COPY ./resources/scripts/entrypoint-ldc.sh /usr/local/bin/entrypoint
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 CMD [ "/usr/local/bin/ldc2" ]
