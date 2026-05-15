@@ -1,0 +1,117 @@
+###############
+# build stage #
+###############
+
+FROM docker.io/debian:bookworm-slim AS build-stage
+
+WORKDIR /opt/build
+
+# Install dependencies
+## Install common system-tools
+
+### Install packages
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	build-essential \
+	curl \
+	git \
+	libcurl4-openssl-dev
+RUN rm -rf /var/lib/apt/lists/*
+
+# Download and install OpenD
+## Download OpenD release bundle
+RUN export opendArch=$(uname -m | sed 's/aarch64/arm64/') && \
+	curl -fLsSo opend.tar.xz \
+		"https://github.com/opendlang/opend/releases/download/CI/opend-latest-linux-${opendArch}.tar.xz"
+### Unpack OpenD release bundle
+RUN mkdir -p opend
+RUN tar -xf opend.tar.xz -C opend --strip-components=1
+## Install xpacks
+RUN find /opt
+RUN /opt/build/opend/bin/opend install xpack-emscripten
+RUN /opt/build/opend/bin/opend install xpack-rpi
+RUN /opt/build/opend/bin/opend install xpack-win64
+RUN /opt/build/opend/bin/opend install xpack-zig
+
+### Install xpack dependencies
+
+#### Download emscripten SDK
+RUN curl -fLsSo emsdk.tar.gz \
+	https://github.com/emscripten-core/emsdk/archive/refs/heads/main.tar.gz
+
+#### Install Emscripten SDK
+
+##### Unpack SDK
+RUN mkdir emsdk
+RUN tar -xf emsdk.tar.gz -C emsdk --strip-components=1
+
+##### Install dependencies of Emscripten SDK
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	python3
+RUN rm -rf /var/lib/apt/lists/*
+
+##### Install SDK
+RUN /opt/build/emsdk/emsdk install latest
+RUN /opt/build/emsdk/emsdk activate latest
+
+#### Install installation dependencies of Zig
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	minisign
+RUN rm -rf /var/lib/apt/lists/*
+
+#### Download Zig
+RUN curl -fLsSo zig.tar.xz \
+	https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz
+RUN curl -fLsSo zig.tar.xz.minisig \
+	https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz.minisig
+RUN minisign -Vm zig.tar.xz \
+	-P 'RWSGOq2NVecA2UPNdBUZykf1CCb147pkmdtYxgb3Ti+JO/wCYvhbAb/U'
+
+#### Install Zig
+RUN mkdir zig
+RUN tar -xf zig.tar.xz -C zig --strip-components=1
+
+################
+# export stage #
+################
+
+FROM docker.io/debian:bookworm-slim AS export-stage
+
+## Prepare runtime-environment
+
+### Install packages
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
+	libconfig++ \
+	build-essential \
+	curl \
+	libcurl4-openssl-dev
+RUN rm -rf /var/lib/apt/lists/*
+
+##### Install dependencies of Emscripten SDK
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN apt-get -y install \
+	python3
+RUN rm -rf /var/lib/apt/lists/*
+
+# Copy files
+COPY --from=build-stage /opt/build/emsdk /opt/emsdk
+COPY --from=build-stage /opt/build/opend /opt/opend
+COPY --from=build-stage /opt/build/zig /opt/zig
+
+# Symlink applications
+RUN ln -s /opt/opend/bin/ddemangle /usr/local/bin/ddemangle
+RUN ln -s /opt/opend/bin/dmd /usr/local/bin/dmd
+RUN ln -s /opt/opend/bin/ldc2 /usr/local/bin/ldc2
+RUN ln -s /opt/opend/bin/ldmd2 /usr/local/bin/ldmd2
+RUN ln -s /opt/opend/bin/opend /usr/local/bin/opend
+RUN ln -s /opt/opend/bin/timetrace2txt /usr/local/bin/timetrace2txt
+RUN ln -s /opt/zig/zig /usr/local/bin/zig
+
+COPY ./templates/scripts/entrypoint-opend.sh /usr/local/bin/entrypoint
+COPY ./templates/scripts/zigcc.sh /usr/local/bin/zigcc
+
+ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
+CMD [ "/usr/local/bin/opend" ]
