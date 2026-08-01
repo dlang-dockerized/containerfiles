@@ -1,0 +1,45 @@
+--- ./llvm-source/llvm/include/llvm/Support/Signals.h
++++ ./llvm-source/llvm/include/llvm/Support/Signals.h
+@@ -14,6 +14,7 @@
+ #ifndef LLVM_SUPPORT_SIGNALS_H
+ #define LLVM_SUPPORT_SIGNALS_H
+ 
++#include <cstdint>
+ #include <string>
+ 
+ namespace llvm {
+
+--- ./llvm-source/llvm/include/llvm/ADT/STLExtras.h
++++ ./llvm-source/llvm/include/llvm/ADT/STLExtras.h
+@@ -1820,9 +1820,9 @@
+   result_pair(std::size_t Index, IterOfRange<R> Iter)
+       : Index(Index), Iter(Iter) {}
+ 
+-  result_pair<R>(const result_pair<R> &Other)
++  result_pair   (const result_pair    &Other)
+       : Index(Other.Index), Iter(Other.Iter) {}
+-  result_pair<R> &operator=(const result_pair<R> &Other) {
++  result_pair    &operator=(const result_pair    &Other) {
+     Index = Other.Index;
+     Iter = Other.Iter;
+     return *this;
+@@ -1856,7 +1856,7 @@
+   result_type &operator*() { return Result; }
+   const result_type &operator*() const { return Result; }
+ 
+-  enumerator_iter<R> &operator++() {
++  enumerator_iter    &operator++() {
+     assert(Result.Index != std::numeric_limits<size_t>::max());
+     ++Result.Iter;
+     ++Result.Index;
+@@ -1870,8 +1870,8 @@
+     return Result.Iter == RHS.Result.Iter;
+   }
+ 
+-  enumerator_iter<R>(const enumerator_iter<R> &Other) : Result(Other.Result) {}
+-  enumerator_iter<R> &operator=(const enumerator_iter<R> &Other) {
++  enumerator_iter   (const enumerator_iter    &Other) : Result(Other.Result) {}
++  enumerator_iter    &operator=(const enumerator_iter    &Other) {
+     Result = Other.Result;
+     return *this;
+   }

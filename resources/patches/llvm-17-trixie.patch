@@ -1,0 +1,33 @@
+--- ./llvm-source/lldb/source/Plugins/ScriptInterpreter/Python/ScriptInterpreterPython.cpp
++++ ./llvm-source/lldb/source/Plugins/ScriptInterpreter/Python/ScriptInterpreterPython.cpp
+@@ -177,7 +177,7 @@
+       return;
+ #endif
+ 
+-    if (PyEval_ThreadsInitialized()) {
++    if (true) {
+       Log *log = GetLog(LLDBLog::Script);
+ 
+       m_was_already_initialized = true;
+@@ -186,9 +186,6 @@
+                 m_gil_state == PyGILState_UNLOCKED ? "un" : "");
+       return;
+     }
+-
+-    // InitThreads acquires the GIL if it hasn't been called before.
+-    PyEval_InitThreads();
+   }
+ 
+   PyGILState_STATE m_gil_state = PyGILState_UNLOCKED;
+
+--- ./llvm-source/lldb/source/Plugins/ScriptInterpreter/Python/PythonDataObjects.cpp
++++ ./llvm-source/lldb/source/Plugins/ScriptInterpreter/Python/PythonDataObjects.cpp
+@@ -74,7 +74,7 @@
+ #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 7
+   return _Py_Finalizing != nullptr;
+ #else
+-  return _Py_IsFinalizing();
++  return Py_IsFinalizing();
+ #endif
+ }
+ 
