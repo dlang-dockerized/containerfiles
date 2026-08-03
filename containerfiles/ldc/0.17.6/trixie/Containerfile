@@ -100,9 +100,6 @@ RUN curl -fLsSo dub.tar.gz \
 RUN mkdir -p dub
 RUN tar -xf dub.tar.gz -C dub --strip-components=1
 
-### Patch DUB
-COPY resources/patches/dub-trixie.patch dub-trixie.patch
-RUN patch -p1 < dub-trixie.patch || true
 
 ### Build
 WORKDIR /opt/build/dub

@@ -47,6 +47,10 @@ RUN tar -xf dmd.tar.gz -C dmd --strip-components=1
 RUN tar -xf phobos.tar.gz -C phobos --strip-components=1
 RUN tar -xf druntime.tar.gz -C druntime --strip-components=1
 
+### Patch build script
+COPY resources/patches/wrap-std-process-execute.d wrap-std-process-execute.d
+RUN cat wrap-std-process-execute.d >> dmd/src/build.d
+
 ### Build DMD compiler
 RUN make -C dmd
 
@@ -69,9 +73,9 @@ RUN curl -fLsSo dub.tar.gz \
 RUN mkdir -p dub
 RUN tar -xf dub.tar.gz -C dub --strip-components=1
 
-### Patch DUB
-COPY resources/patches/dub-trixie.patch dub-trixie.patch
-RUN patch -p1 < dub-trixie.patch || true
+### Patch build script
+COPY resources/patches/wrap-std-process-execute.d wrap-std-process-execute.d
+RUN cat wrap-std-process-execute.d >> dub/build.d
 
 ### Build
 WORKDIR /opt/build/dub
