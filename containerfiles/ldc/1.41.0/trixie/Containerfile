@@ -2,14 +2,14 @@
 # imported images #
 ###################
 
-FROM dlang-dockerized/llvm:20.1-trixie AS llvm-imported
-FROM dlang-dockerized/ldc:1.20-trixie AS ldc-bootstrap-imported
+FROM 1/llvm:1-1 AS llvm-imported
+FROM 1/ldc:1-1 AS ldc-bootstrap-imported
 
 ###############
 # build stage #
 ###############
 
-FROM docker.io/debian:trixie-slim AS build-stage-2
+FROM 1 AS build-stage-1
 
 WORKDIR /opt/build
 
@@ -34,21 +34,21 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
 	python3
 RUN rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt LLVM from dlang-dockerized/llvm
+# Copy prebuilt LLVM from 1/llvm
 COPY --from=llvm-imported /opt/llvm/ /opt/llvm/
 
 # Download LDC sources
 
 ### Download LDC source
 RUN curl -fLsSo ldc.tar.gz \
-	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.41.0.tar.gz"
+	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.tar.gz"
 
 ### Download Phobos source
 RUN curl -fLsSo phobos.tar.gz \
-	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.41.0.tar.gz"
+	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.tar.gz"
 
 
-# Copy prebuilt LDC from dlang-dockerized/ldc
+# Copy prebuilt LDC from 1/ldc
 COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc-bootstrap/
 RUN find /opt/ldc-bootstrap/etc/ldc2.conf -type f -exec sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' {} \;
 
@@ -90,7 +90,7 @@ RUN rm /opt/helloworld.d
 # self bootstrap #
 ##################
 
-FROM docker.io/debian:trixie-slim AS build-stage-3
+FROM 1 AS build-stage-1
 
 WORKDIR /opt/build
 
@@ -115,22 +115,22 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
 	python3
 RUN rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt LLVM from dlang-dockerized/llvm
+# Copy prebuilt LLVM from 1/llvm
 COPY --from=llvm-imported /opt/llvm/ /opt/llvm/
 
 # Download LDC sources
 
 ### Download LDC source
 RUN curl -fLsSo ldc.tar.gz \
-	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.41.0.tar.gz"
+	"https://github.com/ldc-developers/ldc/archive/refs/tags/v1.tar.gz"
 
 ### Download Phobos source
 RUN curl -fLsSo phobos.tar.gz \
-	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.41.0.tar.gz"
+	"https://github.com/ldc-developers/phobos/archive/refs/tags/ldc-v1.tar.gz"
 
 
-# Copy prebuilt LDC from dlang-dockerized/ldc
-COPY --from=build-stage-2 /opt/ldc/ /opt/ldc-bootstrap/
+# Copy prebuilt LDC from 1/ldc
+COPY --from=build-stage-1 /opt/ldc/ /opt/ldc-bootstrap/
 RUN find /opt/ldc-bootstrap/etc/ldc2.conf -type f -exec sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' {} \;
 
 # Build and install LDC
@@ -172,7 +172,7 @@ RUN rm /opt/helloworld.d
 ### Download, build and install DUB
 ## Download DUB source
 RUN curl -fLsSo dub.tar.gz \
-	"https://github.com/dlang/dub/archive/refs/tags/v1.40.0.tar.gz"
+	"https://github.com/dlang/dub/archive/refs/tags/v1.tar.gz"
 
 ## Build DUB
 
@@ -181,8 +181,8 @@ RUN mkdir -p dub
 RUN tar -xf dub.tar.gz -C dub --strip-components=1
 
 ### Patch DUB
-COPY resources/patches/dub-trixie.patch dub-trixie.patch
-RUN patch -p1 < dub-trixie.patch || true
+COPY resources/patches/1 1
+RUN patch -p1 < 1 || true
 
 ### Build
 WORKDIR /opt/build/dub
@@ -194,7 +194,7 @@ WORKDIR /opt/build
 ## Make D Tools
 
 ### Download D Tools source
-RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.111.0.tar.gz"
+RUN curl -fLsSo d-tools.tar.gz "1"
 ### Build D Tools
 RUN mkdir -p d-tools
 RUN tar -xf d-tools.tar.gz -C d-tools --strip-components=1
@@ -205,7 +205,7 @@ RUN make -C d-tools \
 # export stage #
 ################
 
-FROM docker.io/debian:trixie-slim AS export-stage
+FROM 1 AS export-stage
 
 ## Prepare runtime-environment
 
@@ -236,7 +236,7 @@ COPY --from=llvm-imported /opt/llvm/local/lib /opt/llvm/local/lib
 RUN ln -s /opt/llvm/bin/lldb /usr/local/bin/lldb
 RUN ln -s /opt/llvm/bin/lli /usr/local/bin/lli
 
-COPY --from=build-stage-3 /opt/ldc /opt/ldc
+COPY --from=1 /opt/ldc /opt/ldc
 
 RUN ln -s /opt/ldc/bin/ldc2 /usr/local/bin/ldc2
 RUN ln -s /opt/ldc/bin/ldmd2 /usr/local/bin/ldmd2
@@ -244,20 +244,20 @@ RUN ln -s /opt/ldc/bin/ldmd2 /usr/local/bin/dmd
 ENV DMD=/usr/local/bin/ldmd2
 
 ## Install D Tools
-COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
-COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
-COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
+COPY --from=1 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
+COPY --from=1 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
+COPY --from=1 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
 # Self-test
 COPY ./resources/helloworld.d /opt/helloworld.d
 RUN /opt/ldc/bin/ldmd2 -run /opt/helloworld.d
 RUN rm /opt/helloworld.d
 
-COPY --from=build-stage-3 /opt/build/dub/bin/dub /usr/local/bin/dub
+COPY --from=1 /opt/build/dub/bin/dub /usr/local/bin/dub
 
 ## Install D Tools
-COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
-COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
-COPY --from=build-stage-3 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
+COPY --from=1 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
+COPY --from=1 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
+COPY --from=1 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
 COPY ./resources/scripts/entrypoint-ldc.sh /usr/local/bin/entrypoint
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]

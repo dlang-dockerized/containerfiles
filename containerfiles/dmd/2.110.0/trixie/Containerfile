@@ -2,13 +2,13 @@
 # imported images #
 ###################
 
-FROM dlang-dockerized/ldc:1.20-trixie AS ldc-bootstrap-imported
+FROM 1/ldc:1-1 AS ldc-bootstrap-imported
 
 ###############
 # build stage #
 ###############
 
-FROM docker.io/debian:trixie-slim AS build-stage
+FROM 1 AS build-stage
 
 WORKDIR /opt/build
 
@@ -25,15 +25,15 @@ RUN apt-get -y install \
 	libcurl4-openssl-dev
 RUN rm -rf /var/lib/apt/lists/*
 
-# Copy prebuilt LDC from dlang-dockerized/ldc
+# Copy prebuilt LDC from 1/ldc
 COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc-bootstrap/
 RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.conf
 
 # Download, build and install DMD
 
 ## Download DMD source
-RUN curl -fLsSo dmd.tar.gz "https://github.com/dlang/dmd/archive/refs/tags/v2.110.0.tar.gz"
-RUN curl -fLsSo phobos.tar.gz "https://github.com/dlang/phobos/archive/refs/tags/v2.110.0.tar.gz"
+RUN curl -fLsSo dmd.tar.gz "1"
+RUN curl -fLsSo phobos.tar.gz "1"
 
 RUN ln -s /opt/ldc-bootstrap/bin/ldmd2 /usr/local/bin/dmd
 
@@ -59,7 +59,7 @@ RUN make -C phobos
 ### Download, build and install DUB
 ## Download DUB source
 RUN curl -fLsSo dub.tar.gz \
-	"https://github.com/dlang/dub/archive/refs/tags/v1.39.0.tar.gz"
+	"https://github.com/dlang/dub/archive/refs/tags/v1.tar.gz"
 
 ## Build DUB
 
@@ -68,8 +68,8 @@ RUN mkdir -p dub
 RUN tar -xf dub.tar.gz -C dub --strip-components=1
 
 ### Patch DUB
-COPY resources/patches/dub-trixie.patch dub-trixie.patch
-RUN patch -p1 < dub-trixie.patch || true
+COPY resources/patches/1 1
+RUN patch -p1 < 1 || true
 
 ### Build
 WORKDIR /opt/build/dub
@@ -81,7 +81,7 @@ WORKDIR /opt/build
 ## Make D Tools
 
 ### Download D Tools source
-RUN curl -fLsSo d-tools.tar.gz "https://github.com/dlang/tools/archive/refs/tags/v2.110.0.tar.gz"
+RUN curl -fLsSo d-tools.tar.gz "1"
 ### Build D Tools
 RUN mkdir -p d-tools
 RUN tar -xf d-tools.tar.gz -C d-tools --strip-components=1
@@ -92,7 +92,7 @@ RUN make -C d-tools \
 # export stage #
 ################
 
-FROM docker.io/debian:trixie-slim AS export-stage
+FROM 1 AS export-stage
 
 ## Prepare runtime-environment
 
@@ -114,9 +114,9 @@ COPY ./resources/dmd.conf /etc/dmd.conf
 COPY ./resources/scripts/entrypoint-dmd.sh /usr/local/bin/entrypoint
 
 ## Install D Tools
-COPY --from=build-stage /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
-COPY --from=build-stage /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
-COPY --from=build-stage /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
+COPY --from=1 /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
+COPY --from=1 /opt/build/d-tools/generated/linux/64/dustmite /usr/local/bin/dustmite
+COPY --from=1 /opt/build/d-tools/generated/linux/64/rdmd /usr/local/bin/rdmd
 # Self-test
 COPY ./resources/helloworld.d /opt/helloworld.d
 RUN dmd -run /opt/helloworld.d

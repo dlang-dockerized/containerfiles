@@ -2,7 +2,7 @@
 # build stage #
 ###############
 
-FROM docker.io/debian:trixie-slim AS build-stage
+FROM 1 AS build-stage
 
 WORKDIR /opt/build
 
@@ -39,7 +39,7 @@ RUN rm -rf /var/lib/apt/lists/*
 # Download, build and install LLVM
 ## Download LLVM source
 RUN curl -fLsSo llvm.tar.gz \
-	"https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-17.0.6.tar.gz"
+	"https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-1.tar.gz"
 
 ## Build LLVM
 
@@ -49,8 +49,8 @@ RUN tar -xf llvm.tar.gz -C llvm-source --strip-components=1
 
 
 ### Patch LLVM
-COPY resources/patches/llvm-17-trixie.patch llvm-17-trixie.patch
-RUN patch -p1 < llvm-17-trixie.patch
+COPY resources/patches/1 1
+RUN patch -p1 < 1
 
 ### Build
 RUN cmake \
@@ -58,7 +58,7 @@ RUN cmake \
 	-B llvm-build \
 	-G Ninja \
 	-DCMAKE_BUILD_TYPE=Release \
-	-DLLVM_ENABLE_PROJECTS="clang;lld;lldb" \
+	-DLLVM_ENABLE_PROJECTS="1" \
 	-DLLVM_ENABLE_RUNTIMES=compiler-rt \
 	-DCMAKE_INSTALL_PREFIX=/opt/llvm \
 	-DCMAKE_C_COMPILER=gcc \
@@ -73,7 +73,7 @@ RUN cmake --install llvm-build
 # export stage #
 ################
 
-FROM docker.io/debian:trixie-slim AS export-stage
+FROM 1 AS export-stage
 
 COPY --from=build-stage /opt/llvm/ /opt/llvm/
 
