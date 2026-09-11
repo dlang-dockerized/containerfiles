@@ -79,7 +79,7 @@ RUN cmake \
 	-DCMAKE_C_COMPILER=gcc \
 	-DCMAKE_CXX_COMPILER=g++ \
 	-DCMAKE_ASM_COMPILER=gcc \
-	-DCMAKE_BUILD_TYPE=RelWithDebInfo
+	-DCMAKE_BUILD_TYPE=Release
 RUN cmake --build ldc-build_-_stage-2
 
 ### Install
