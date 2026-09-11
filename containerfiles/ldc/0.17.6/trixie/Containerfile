@@ -2,7 +2,7 @@
 # imported images #
 ###################
 
-FROM dlang-dockerized/llvm:7.1-trixie AS llvm-imported
+FROM dlang-dockerized/llvm:7-trixie AS llvm-imported
 
 ###############
 # build stage #
@@ -14,7 +14,7 @@ WORKDIR /opt/build
 
 # Install dependencies
 
-## Install extended common system-tools
+## Install common system-tools
 
 ### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
@@ -75,7 +75,6 @@ RUN cmake \
 	-DCMAKE_C_COMPILER=gcc \
 	-DCMAKE_CXX_COMPILER=g++ \
 	-DCMAKE_ASM_COMPILER=gcc
-	#-DLDC_EXE=y # didn't work
 RUN cmake --build ldc-build
 
 ### Install
@@ -135,7 +134,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
 	curl \
 	libcurl4-openssl-dev
 RUN rm -rf /var/lib/apt/lists/*
-
 COPY --from=llvm-imported /opt/llvm/bin /opt/llvm/bin
 
 RUN ln -s /opt/llvm/bin/clang /usr/local/bin/clang

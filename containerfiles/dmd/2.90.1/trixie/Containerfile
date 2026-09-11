@@ -14,7 +14,7 @@ WORKDIR /opt/build
 
 # Install dependencies
 
-## Install extended common system-tools
+## Install common system-tools
 
 ### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
@@ -108,7 +108,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
 	curl \
 	libcurl4-openssl-dev
 RUN rm -rf /var/lib/apt/lists/*
-
 COPY --from=build-stage /opt/build/dmd/generated/linux/release/64/dmd /usr/local/bin/dmd
 COPY --from=build-stage /opt/build/phobos/generated/linux/release/64/* /usr/local/lib/
 COPY --from=build-stage /opt/build/druntime/src /usr/include/dmd/druntime/import
