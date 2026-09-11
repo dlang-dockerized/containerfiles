@@ -20,6 +20,8 @@ WORKDIR /opt/build
 ### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
+	binutils-dev \
+	binutils-gold \
 	build-essential \
 	curl \
 	git \
@@ -69,22 +71,30 @@ RUN tar -xf druntime.tar.gz -C ldc-source/runtime/druntime --strip-components=1
 
 COPY resources/patches/ldc-alchemy-1-25.patch ldc-alchemy-1-25.patch
 RUN patch -p1 < ldc-alchemy-1-25.patch
+COPY resources/patches/ldc-rt-path-1-28.patch ldc-rt-path-1-28.patch
+RUN patch -p1 < ldc-rt-path-1-28.patch
+
 
 ### Build
 RUN cmake \
 	-S ldc-source \
-	-B ldc-build \
+	-B ldc-build_-_stage-2 \
 	-G Ninja \
-	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=/opt/ldc \
 	-DLLVM_ROOT_DIR=/opt/llvm \
+	-DBUILD_LTO_LIBS=ON \
+	-DLDC_INSTALL_LTOPLUGIN=ON \
+	-DLDC_INSTALL_LLVM_RUNTIME_LIBS=ON \
+	-DLDC_INSTALL_LLVM_RUNTIME_LIBS_ARCH='' \
+	-DLDC_INSTALL_LLVM_RUNTIME_LIBS_OS="$(/opt/llvm/bin/clang -print-target-triple)" \
 	-DCMAKE_C_COMPILER=gcc \
 	-DCMAKE_CXX_COMPILER=g++ \
-	-DCMAKE_ASM_COMPILER=gcc
-RUN cmake --build ldc-build
+	-DCMAKE_ASM_COMPILER=gcc \
+	-DCMAKE_BUILD_TYPE=RelWithDebInfo
+RUN cmake --build ldc-build_-_stage-2
 
 ### Install
-RUN cmake --install ldc-build
+RUN cmake --install ldc-build_-_stage-2
 ENV DMD=/opt/ldc/bin/ldmd2
 
 # Self-test
@@ -107,6 +117,8 @@ WORKDIR /opt/build
 ### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
+	binutils-dev \
+	binutils-gold \
 	build-essential \
 	curl \
 	git \
@@ -156,23 +168,30 @@ RUN tar -xf druntime.tar.gz -C ldc-source/runtime/druntime --strip-components=1
 
 COPY resources/patches/ldc-alchemy-1-25.patch ldc-alchemy-1-25.patch
 RUN patch -p1 < ldc-alchemy-1-25.patch
+COPY resources/patches/ldc-rt-path-1-28.patch ldc-rt-path-1-28.patch
+RUN patch -p1 < ldc-rt-path-1-28.patch
+
 
 ### Build
 RUN cmake \
 	-S ldc-source \
-	-B ldc-build \
+	-B ldc-build_-_stage-3 \
 	-G Ninja \
-	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=/opt/ldc \
 	-DLLVM_ROOT_DIR=/opt/llvm \
 	-DBUILD_LTO_LIBS=ON \
+	-DLDC_INSTALL_LTOPLUGIN=ON \
+	-DLDC_INSTALL_LLVM_RUNTIME_LIBS=ON \
+	-DLDC_INSTALL_LLVM_RUNTIME_LIBS_ARCH='' \
+	-DLDC_INSTALL_LLVM_RUNTIME_LIBS_OS="$(/opt/llvm/bin/clang -print-target-triple)" \
 	-DCMAKE_C_COMPILER=gcc \
 	-DCMAKE_CXX_COMPILER=g++ \
-	-DCMAKE_ASM_COMPILER=gcc
-RUN cmake --build ldc-build
+	-DCMAKE_ASM_COMPILER=gcc \
+	-DCMAKE_BUILD_TYPE=RelWithDebInfo
+RUN cmake --build ldc-build_-_stage-3
 
 ### Install
-RUN cmake --install ldc-build
+RUN cmake --install ldc-build_-_stage-3
 ENV DMD=/opt/ldc/bin/ldmd2
 
 # Self-test
@@ -231,15 +250,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
 	libcurl4-openssl-dev
 RUN rm -rf /var/lib/apt/lists/*
 COPY --from=llvm-imported /opt/llvm/bin /opt/llvm/bin
+COPY --from=llvm-imported /opt/llvm/lib/LLVMgold.so /opt/llvm/lib/LLVMgold.so
 
 RUN ln -s /opt/llvm/bin/clang /usr/local/bin/clang
 RUN ln -s /opt/llvm/bin/clang /usr/local/bin/clang++
 RUN ln -s /opt/llvm/bin/llc /usr/local/bin/llc
 
-RUN ln -s /opt/llvm/bin/lld /usr/local/bin/ld
-RUN ln -s /opt/llvm/bin/lld /usr/local/bin/ld.lld
-RUN ln -s /opt/llvm/bin/lld /usr/local/bin/lld
-RUN ln -s /opt/llvm/bin/lld /usr/local/bin/lld-link
 
 
 COPY --from=build-stage-3 /opt/ldc /opt/ldc

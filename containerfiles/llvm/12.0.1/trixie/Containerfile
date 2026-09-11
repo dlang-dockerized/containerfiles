@@ -12,6 +12,8 @@ WORKDIR /opt/build
 ### Install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN apt-get -y install \
+	binutils-dev \
+	binutils-gold \
 	build-essential \
 	curl \
 	git \
@@ -49,7 +51,8 @@ RUN cmake \
 	-B llvm-build \
 	-G Ninja \
 	-DCMAKE_BUILD_TYPE=Release \
-	-DLLVM_ENABLE_PROJECTS="clang;lld" \
+	-DLLVM_BINUTILS_INCDIR=/usr/include \
+	-DLLVM_ENABLE_PROJECTS="clang" \
 	-DLLVM_ENABLE_RUNTIMES=compiler-rt \
 	-DCMAKE_INSTALL_PREFIX=/opt/llvm \
 	-DCMAKE_C_COMPILER=gcc \
