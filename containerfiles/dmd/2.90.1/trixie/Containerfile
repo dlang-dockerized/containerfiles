@@ -2,7 +2,7 @@
 # imported images #
 ###################
 
-FROM dlang-dockerized/ldc:1.20-trixie AS ldc-bootstrap-imported
+FROM dlang-dockerized/ldc:1.30-trixie AS ldc-bootstrap-imported
 
 ###############
 # build stage #
@@ -28,8 +28,8 @@ RUN apt-get -y install \
 RUN rm -rf /var/lib/apt/lists/*
 
 # Copy prebuilt LDC from dlang-dockerized/ldc
-COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc-bootstrap/
-RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.conf
+COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc/
+RUN ln -s /opt/ldc/bin/ldmd2 /usr/local/bin/dmd
 
 # Download, build and install DMD
 
@@ -37,8 +37,6 @@ RUN sed -i 's/\/opt\/ldc/\/opt\/ldc-bootstrap/g' /opt/ldc-bootstrap/etc/ldc2.con
 RUN curl -fLsSo dmd.tar.gz "https://github.com/dlang/dmd/archive/refs/tags/v2.090.1.tar.gz"
 RUN curl -fLsSo phobos.tar.gz "https://github.com/dlang/phobos/archive/refs/tags/v2.090.1.tar.gz"
 RUN curl -fLsSo druntime.tar.gz "https://github.com/dlang/druntime/archive/refs/tags/v2.090.1.tar.gz"
-
-RUN ln -s /opt/ldc-bootstrap/bin/ldmd2 /usr/local/bin/dmd
 
 ## Build DMD
 
