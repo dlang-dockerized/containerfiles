@@ -57,13 +57,15 @@ RUN cat wrap-std-process-execute.d >> dmd/compiler/src/build.d
 
 ### Build DMD compiler
 RUN \
+	ENABLE_LTO=1 \
+	ENABLE_RELEASE=1 \
 	HOST_DMD_KIND=ldc \
 	HOST_DMD_PATH=/opt/ldc/bin/ldc2 \
 	/opt/ldc/bin/ldc2 -run \
 	./dmd/compiler/src/build.d \
 		-- dmd
 
-RUN rm /usr/local/bin/dmd
+RUN unlink /usr/local/bin/dmd
 RUN ln -s /opt/build/dmd/generated/linux/release/64/dmd /usr/local/bin/dmd
 ENV DMD=/usr/local/bin/dmd
 

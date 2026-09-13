@@ -57,7 +57,7 @@ RUN tar -xf druntime.tar.gz -C druntime --strip-components=1
 ### Build DMD compiler
 RUN make -C dmd
 
-RUN rm /usr/local/bin/dmd
+RUN unlink /usr/local/bin/dmd
 RUN ln -s /opt/build/dmd/generated/linux/release/64/dmd /usr/local/bin/dmd
 ENV DMD=/usr/local/bin/dmd
 
