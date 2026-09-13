@@ -2,7 +2,7 @@
 # imported images #
 ###################
 
-FROM dlang-dockerized/ldc:1.30-trixie AS ldc-bootstrap-imported
+FROM dlang-dockerized/ldc:1.20-trixie AS ldc-bootstrap-imported
 
 ###############
 # build stage #
@@ -29,7 +29,13 @@ RUN rm -rf /var/lib/apt/lists/*
 
 # Copy prebuilt LDC from dlang-dockerized/ldc
 COPY --from=ldc-bootstrap-imported /opt/ldc/ /opt/ldc/
+COPY --from=ldc-bootstrap-imported /opt/llvm/bin/lld /opt/llvm/bin/lld
+
 RUN ln -s /opt/ldc/bin/ldmd2 /usr/local/bin/dmd
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/ld
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/ld.lld
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/lld
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/lld-link
 
 # Download, build and install DMD
 
@@ -53,7 +59,12 @@ COPY resources/patches/wrap-std-process-execute.d wrap-std-process-execute.d
 RUN cat wrap-std-process-execute.d >> dmd/src/build.d
 
 ### Build DMD compiler
-RUN make -C dmd -f posix.mak
+RUN \
+	HOST_DMD_KIND=ldc \
+	HOST_DMD_PATH=/opt/ldc/bin/ldc2 \
+	/opt/ldc/bin/ldc2 -run \
+	./dmd/src/build.d \
+		-- dmd
 
 RUN rm /usr/local/bin/dmd
 RUN ln -s /opt/build/dmd/generated/linux/release/64/dmd /usr/local/bin/dmd
@@ -109,13 +120,19 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
 	libcurl4-openssl-dev
 RUN rm -rf /var/lib/apt/lists/*
 COPY --from=build-stage /opt/build/dmd/generated/linux/release/64/dmd /usr/local/bin/dmd
-COPY --from=build-stage /opt/build/phobos/generated/linux/release/64/* /usr/local/lib/
+COPY --from=build-stage /opt/build/phobos/generated/linux/release/64/* /usr/lib/
 COPY --from=build-stage /opt/build/druntime/src /usr/include/dmd/druntime/import
 COPY --from=build-stage /opt/build/phobos/std /usr/include/dmd/phobos/std
 COPY --from=build-stage /opt/build/phobos/etc /usr/include/dmd/phobos/etc
 COPY --from=build-stage /opt/build/dub/bin/dub /usr/local/bin/dub
 COPY ./resources/dmd.conf /etc/dmd.conf
 COPY ./resources/scripts/entrypoint-dmd.sh /usr/local/bin/entrypoint
+
+COPY --from=ldc-bootstrap-imported /opt/llvm/bin/lld /opt/llvm/bin/lld
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/ld
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/ld.lld
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/lld
+RUN ln -s /opt/llvm/bin/lld /usr/local/bin/lld-link
 
 ## Install D Tools
 COPY --from=build-stage /opt/build/d-tools/generated/linux/64/ddemangle /usr/local/bin/ddemangle
