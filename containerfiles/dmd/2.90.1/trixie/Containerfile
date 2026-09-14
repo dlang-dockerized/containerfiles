@@ -60,9 +60,8 @@ RUN cat wrap-std-process-execute.d >> dmd/src/build.d
 
 ### Build DMD compiler
 RUN \
-	HOST_DMD_KIND=ldc \
-	HOST_DMD_PATH=/opt/ldc/bin/ldc2 \
-	/opt/ldc/bin/ldc2 -run \
+	HOST_DMD=/opt/ldc/bin/ldmd2 \
+	/opt/ldc/bin/ldmd2 -run \
 	./dmd/src/build.d \
 		-- dmd
 
