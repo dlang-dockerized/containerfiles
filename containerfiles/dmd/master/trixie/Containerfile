@@ -70,6 +70,23 @@ ENV DMD=/usr/local/bin/dmd
 
 ### Build Phobos
 RUN make -C phobos
+
+### Rebuild DMD with PGO
+RUN ln -s /opt/ldc/bin/ldc-profdata /usr/local/bin/ldc-profdata
+WORKDIR /opt/build/dmd
+RUN \
+	ENABLE_RELEASE=1 \
+	HOST_DMD=/opt/ldc/bin/ldmd2 \
+	/opt/ldc/bin/ldmd2 -run \
+	./compiler/src/build.d \
+		-- --force dmd-pgo
+WORKDIR /opt/build
+
+#### Rebuild druntime + Phobos
+RUN find phobos -type f -name '*.d' -exec touch {} \;
+RUN find dmd/druntime/src -type f -name '*.d' -exec touch {} \;
+RUN make -C phobos
+
 ## Make DUB
 
 ### Download, build and install DUB
