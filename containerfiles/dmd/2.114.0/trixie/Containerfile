@@ -75,11 +75,10 @@ RUN make -C phobos
 RUN ln -s /opt/ldc/bin/ldc-profdata /usr/local/bin/ldc-profdata
 WORKDIR /opt/build/dmd
 RUN \
+	ENABLE_LTO=1 \
 	ENABLE_RELEASE=1 \
 	HOST_DMD=/opt/ldc/bin/ldmd2 \
-	/opt/ldc/bin/ldmd2 -run \
-	./compiler/src/build.d \
-		-- --force dmd-pgo
+	make dmd-pgo
 WORKDIR /opt/build
 
 #### Rebuild druntime + Phobos
